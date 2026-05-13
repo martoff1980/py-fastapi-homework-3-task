@@ -255,6 +255,13 @@ async def reset_password_complete(
         token = result.scalars().first()
 
         if not token:
+            await db.execute(
+                delete(PasswordResetTokenModel).where(
+                    PasswordResetTokenModel.user_id == user.id
+                )
+            )
+            await db.commit()
+            
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid email or token.",
@@ -316,8 +323,8 @@ async def request_password_reset(
     }
     
     # 2. Если пользователь не найден или не активен, просто возвращаем 200 (безопасность)
-    #  or not user.is_active
-    if not user:
+    
+    if not user or not user.is_active:
         return message
 
     # 3. Удаляем старые токены сброса, если они были (опционально для чистоты БД)

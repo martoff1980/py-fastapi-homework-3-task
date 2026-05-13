@@ -135,7 +135,7 @@ class UserModel(Base):
         """
         Verify the provided password against the stored hashed password.
         """
-        return verify_password(raw_password, self._hashed_password)
+        return verify_password(raw_password, self.hashed_password)
 
     @validates("email")
     def validate_email(self, key, value):
