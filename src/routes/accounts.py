@@ -103,34 +103,31 @@ async def activate_user(
         raise HTTPException(
             status_code=400, detail="Invalid or expired activation token."
         )
-    
+
     expires_at = token_record.expires_at
 
     # если datetime без timezone — считаем UTC
     if expires_at.tzinfo is None:
         expires_at = expires_at.replace(tzinfo=timezone.utc)
-    
+
     # прооверка на истечение срока действия токена
     # - для SQLite нужно учитывать timezone
     if expires_at < datetime.now(timezone.utc):
         await db.delete(token_record)
         await db.commit()
-        
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired activation token."
+            detail="Invalid or expired activation token.",
         )
-    
+
     user = await db.scalar(
         select(UserModel).where(UserModel.id == token_record.user_id)
     )
-    
+
     if user.is_active:
-        raise HTTPException(
-            status_code=400,
-            detail="User account is already active."
-        )
-    
+        raise HTTPException(status_code=400, detail="User account is already active.")
+
     user.is_active = True
 
     await db.delete(token_record)
@@ -166,7 +163,7 @@ async def login(
 
     # Сохраняем refresh token в БД
     new_refresh_token = RefreshTokenModel(user_id=user.id, token=refresh_token_str)
- 
+
     try:
         # Пытаемся зафиксировать изменения в базе
         db.add(new_refresh_token)
@@ -261,7 +258,7 @@ async def reset_password_complete(
                 )
             )
             await db.commit()
-            
+
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid email or token.",
@@ -304,10 +301,14 @@ async def reset_password_complete(
             detail="An error occurred while resetting the password.",
         )
 
-@router.post("/password-reset/request/", status_code=status.HTTP_200_OK,response_model=MessageResponseSchema)
+
+@router.post(
+    "/password-reset/request/",
+    status_code=status.HTTP_200_OK,
+    response_model=MessageResponseSchema,
+)
 async def request_password_reset(
-    data: PasswordResetRequestSchema,
-    db: AsyncSession = Depends(get_db)
+    data: PasswordResetRequestSchema, db: AsyncSession = Depends(get_db)
 ):
     """
     Эндпоинт для запроса сброса пароля.
@@ -317,33 +318,34 @@ async def request_password_reset(
     query = select(UserModel).where(UserModel.email == data.email)
     result = await db.execute(query)
     user = result.scalar_one_or_none()
-    
+
     message = {
         "message": "If you are registered, you will receive an email with instructions."
     }
-    
+
     # 2. Если пользователь не найден или не активен, просто возвращаем 200 (безопасность)
-    
+
     if not user or not user.is_active:
         return message
 
     # 3. Удаляем старые токены сброса, если они были (опционально для чистоты БД)
-    await db.execute(delete(PasswordResetTokenModel).where(PasswordResetTokenModel.user_id == user.id))
-    await db.commit() 
+    await db.execute(
+        delete(PasswordResetTokenModel).where(
+            PasswordResetTokenModel.user_id == user.id
+        )
+    )
+    await db.commit()
 
     # 4. Создаем новый токен (в тестах часто проверяется сам факт создания записи в БД)
     # Здесь используется заглушка "test_reset_token", если ваш проект не генерирует их иначе
-    reset_token = PasswordResetTokenModel(
-        user_id=user.id,
-        token="test_reset_token" 
-    )
+    reset_token = PasswordResetTokenModel(user_id=user.id, token="test_reset_token")
     db.add(reset_token)
-        
+
     try:
         await db.commit()
     except Exception:
         await db.rollback()
-        # Даже при ошибке базы тесты на успешный запрос обычно ждут 200, 
+        # Даже при ошибке базы тесты на успешный запрос обычно ждут 200,
         # если только это не тест на SQLAlchemy Error
         raise HTTPException(status_code=500, detail="Internal server error")
 

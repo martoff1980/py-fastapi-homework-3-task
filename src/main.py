@@ -28,10 +28,7 @@ async def validation_exception_handler(
         cleaned_error = {
             "type": err.get("type"),
             "loc": err.get("loc"),
-            "msg": str(err.get("msg", "")).replace(
-                "Value error, ",
-                ""
-            ),
+            "msg": str(err.get("msg", "")).replace("Value error, ", ""),
         }
 
         cleaned_errors.append(cleaned_error)

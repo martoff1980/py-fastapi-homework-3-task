@@ -1,5 +1,5 @@
 import re
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator
 from typing import Optional
 
 
@@ -38,8 +38,7 @@ class UserRegistrationRequestSchema(BaseModel):
 class UserRegistrationResponseSchema(UserBaseSchema):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Оставлаем упрошенное имя для совместимости с роутами:
