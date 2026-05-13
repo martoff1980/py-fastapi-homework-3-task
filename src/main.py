@@ -17,15 +17,17 @@ app.include_router(
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    # Берем первую ошибку из списка
-    err = exc.errors()[0]
-    # Убираем префикс "Value error, " если он есть
-    msg = err.get("msg").replace("Value error, ", "")
+async def validation_exception_handler(
+    request: Request,
+    exc: RequestValidationError
+):
+    errors = exc.errors()
+
+    for err in errors:
+        if "msg" in err:
+            err["msg"] = err["msg"].replace("Value error, ", "")
 
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={
-            "detail": msg
-        },  # Тесты часто ожидают строку в detail или определенный формат
+        content={"detail": errors},
     )
