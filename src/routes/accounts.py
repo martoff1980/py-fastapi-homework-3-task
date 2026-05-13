@@ -73,7 +73,7 @@ async def register_user(
 
         # Создание токена активации
         activation_token = ActivationTokenModel(
-            user_id=new_user.id, token="some_generated_token"
+            user_id=new_user.id
         )
         db.add(activation_token)
 
@@ -338,7 +338,7 @@ async def request_password_reset(
 
     # 4. Создаем новый токен (в тестах часто проверяется сам факт создания записи в БД)
     # Здесь используется заглушка "test_reset_token", если ваш проект не генерирует их иначе
-    reset_token = PasswordResetTokenModel(user_id=user.id, token="test_reset_token")
+    reset_token = PasswordResetTokenModel(user_id=user.id)
     db.add(reset_token)
 
     try:
