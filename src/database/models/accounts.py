@@ -129,7 +129,7 @@ class UserModel(Base):
         Set the user's password after validating its strength and hashing it.
         """
         validators.validate_password_strength(raw_password)
-        self._hashed_password = hash_password(raw_password)
+        self.hashed_password = hash_password(raw_password)
 
     def verify_password(self, raw_password: str) -> bool:
         """
