@@ -8,31 +8,25 @@ class UserBaseSchema(BaseModel):
     email: EmailStr
 
 
-# Запрос на регистрацию
-# class UserRegistrationRequestSchema(UserBaseSchema):
-#     password: str = Field(
-#         ...,
-#         # pattern=PASSWORD_REGEX,
-#         min_length=8,
-#         description="Пароль должен быть не менее 8 символов"
-#     )
-
-
 class UserRegistrationRequestSchema(BaseModel):
     email: EmailStr = Field(..., description="User's email address")
-    password: str = Field(..., min_length=8, description="User's password")
+    password: str = Field(..., description="User's password")
 
     @field_validator("password")
     @classmethod
     def validate_password_strength(cls, v: str) -> str:
         if len(v) < 8:
             raise ValueError("Password must contain at least 8 characters.")
-        if not re.search(r"\d", v):
-            raise ValueError("Password must contain at least one digit.")
+
         if not re.search(r"[A-Z]", v):
             raise ValueError("Password must contain at least one uppercase letter.")
+
         if not re.search(r"[a-z]", v):
             raise ValueError("Password must contain at least one lower letter.")
+
+        if not re.search(r"\d", v):
+            raise ValueError("Password must contain at least one digit.")
+
         if not re.search(r"[@$!%*?&#]", v):
             raise ValueError(
                 "Password must contain at least one special character: @, $, !, %, *, ?, #, &."
@@ -78,25 +72,31 @@ class PasswordResetRequestSchema(UserBaseSchema):
 class PasswordResetCompleteRequestSchema(UserBaseSchema):
     email: EmailStr
     token: str
-    password: str = Field(..., min_length=8)
+    password: str
 
     @field_validator("password")
     @classmethod
     def validate_password_strength(cls, v: str) -> str:
         """Validate password strength."""
+
         if len(v) < 8:
             raise ValueError("Password must contain at least 8 characters.")
-        if not any(c.isdigit() for c in v):
-            raise ValueError("Password must contain at least one digit.")
+
         if not any(c.isupper() for c in v):
             raise ValueError("Password must contain at least one uppercase letter.")
+
         if not any(c.islower() for c in v):
             raise ValueError("Password must contain at least one lower letter.")
+
+        if not any(c.isdigit() for c in v):
+            raise ValueError("Password must contain at least one digit.")
+
         special_chars = "@$!%*?#&"
         if not any(c in special_chars for c in v):
             raise ValueError(
                 "Password must contain at least one special character: @, $, !, %, *, ?, #, &."
             )
+
         return v
 
 
